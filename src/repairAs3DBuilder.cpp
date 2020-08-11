@@ -183,28 +183,9 @@ void repairAs3DBuilder(
         F_repair = FRowMajor.template cast<int>();
     }
 
-    // write the result
-    // Vertices
-    V_out.resize(V_repair.rows(), std::vector<Scalar>(V_repair.cols()));
-    for (int v=0;v<V_repair.rows();++v)
-    {
-        for (int xyz=0;xyz<V_repair.cols();++xyz)
-        {
-            V_out.at(v).at(xyz) = static_cast<Scalar>(V_repair(v, xyz));
-        }
-    }
-    // Faces
-    F_out.resize(F_repair.rows(), std::vector<Index>(F_repair.cols()));
-    for (int f=0;f<F_repair.rows();++f)
-    {
-        for (int xyz=0;xyz<F_repair.cols();++xyz)
-        {
-            F_out.at(f).at(xyz) = static_cast<Index>(F_repair(f, xyz));
-        }
-    }
-
     // calculate nearest point for mapping attributes
-    const bool needVertAttrib = (UV_in.size() > 0 || VC_in.size() > 0 || M_in.size() > 0);
+    // we always need vertex attribute
+    const bool needVertAttrib = (true || (UV_in.size() > 0 || VC_in.size() > 0 || M_in.size() > 0));
     const bool needFaceAttrib = (G_in.size() > 0);
     Eigen::Matrix<int, Eigen::Dynamic, 1> vertI, faceI;
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> vertBC, faceBC;
@@ -233,10 +214,17 @@ void repairAs3DBuilder(
         P << vertP,
             faceP;
 
+    std::cout << V.colwise().minCoeff() << std::endl;
+    std::cout << V_repair.colwise().minCoeff() << std::endl;
+
+
         Eigen::Matrix<double, Eigen::Dynamic, 1> sqrD;
         Eigen::Matrix<int, Eigen::Dynamic, 1> I;
         Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> C;
         igl::point_mesh_squared_distance(P, V, F, sqrD, I, C);
+        // project vertices onto the original
+        // (possibly, this projection might introduce mesh error)
+        V_repair = C.block(0, 0, V_repair.rows(), V_repair.cols());
 
         Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> vertC, faceC;
         if (needVertAttrib)
@@ -282,6 +270,26 @@ void repairAs3DBuilder(
             faceI.resize(0, 1);
             faceC.resize(0, 3);
             faceBC.resize(0, 3);
+        }
+    }
+
+    // write the result
+    // Vertices
+    V_out.resize(V_repair.rows(), std::vector<Scalar>(V_repair.cols()));
+    for (int v=0;v<V_repair.rows();++v)
+    {
+        for (int xyz=0;xyz<V_repair.cols();++xyz)
+        {
+            V_out.at(v).at(xyz) = static_cast<Scalar>(V_repair(v, xyz));
+        }
+    }
+    // Faces
+    F_out.resize(F_repair.rows(), std::vector<Index>(F_repair.cols()));
+    for (int f=0;f<F_repair.rows();++f)
+    {
+        for (int xyz=0;xyz<F_repair.cols();++xyz)
+        {
+            F_out.at(f).at(xyz) = static_cast<Index>(F_repair(f, xyz));
         }
     }
 

@@ -1,0 +1,133 @@
+////
+// dll path, language
+////
+[VarDef, zfutilPath, "dummy"]
+[VarDef, dllPath, "dummy"]
+[VarDef, enLangFilePath, "dummy"]
+[VarDef, language]
+// debug
+[VarDef, dataDirPath, [fileNameResolvePath, "3DBuilderFromZBrush_2020\"]]
+// install
+//[VarDef, dataDirPath, [fileNameResolvePath, "ZBRUSH_ZSTARTUP\ZPlugs64\ThicknessCheckerData_2019\"]]
+
+//////
+// search dlls
+// from http://docs.pixologic.com/user-guide/customizing-zbrush/zscripting/zfileutils/#dllPath
+//////
+[RoutineDef, CheckSystem,
+    //check ZBrush version
+    [VarSet,Zvers,[ZBrushInfo,0]]
+    [If,[Val,Zvers] >= 4.8,,		
+        [Note,"\Cff9923This zscript\Cffffff is not designed for this version of \Cff9923ZBrush\Cffffff.",,3,4737096,,300]
+        [Exit]
+    ]
+    // Make sure we have the dll and set its path
+    [If, [ZBrushInfo, 6]==0,//windows
+        //use the path below for testing only
+        [VarSet, dllPath, "3DBuilderFromZBrush_2020\3DBuilderFromZBrush.dll"]
+        [VarSet, zfutilPath, "3DBuilderFromZBrush_2020\ZFileUtils64.dll"]
+        [VarSet, enLangFilePath, "3DBuilderFromZBrush_2020\lang\3DBuilderFromZBrush_2020_en.xml"]
+        //use the path below for installed plugins
+        //[VarSet, dllPath, "ZBRUSH_ZSTARTUP\ZPlugs64\3DBuilderFromZBrush_2020\3DBuilderFromZBrush.dll"]
+        //[VarSet, zfutilPath, "ZBRUSH_ZSTARTUP\ZPlugs64\3DBuilderFromZBrush_2020\ZFileUtils64.dll"]
+        //[VarSet, enLangFilePath, "ZBRUSH_ZSTARTUP\ZPlugs64\3DBuilderFromZBrush_2020\lang\3DBuilderFromZBrush_2020_en.xml"]
+        ,
+        // no support for macOS for this plugins
+    ]
+    // check if there are dll/lib exists
+    [If, [FileExists, [Var,dllPath]],
+    , // else no DLL.
+    [Note,"\Cff9923Note :\Cc0c0c0 The \Cff9923 3DBuilderFromZBrush plugin \Cffffffdll/lib\Cc0c0c0 could not be found at the correct location.  Please re-install the plugin, making sure the relevant files and folders are in the \CffffffZStartup/ZPlugs\Cc0c0c0 folder."]
+    [Exit]
+    ]
+]
+//////
+
+
+//////
+// translation routine
+// from http://docs.pixologic.com/user-guide/customizing-zbrush/zscripting/zfileutils/localization/
+//////
+[RoutineDef, ZFU_RegisterLocalizationFile,
+	[FileExecute, [Var, zfutilPath], RegisterLocalizationFile, enFilePath]
+, enFilePath]
+//////
+
+//////
+// startup
+//////
+// + search dll
+[RoutineCall, CheckSystem]
+//[RoutineCall, ZFU_GetCurrentLanguage, language]
+[RoutineCall, ZFU_RegisterLocalizationFile, [FileNameResolvePath, [Var, enLangFilePath]]]
+
+//////
+// UI
+//////
+[ISubPalette, "ZPlugin:3DBuilder Repair from ZBrush"]
+
+[IButton, "ZPlugin:3DBuilder Repair from ZBrush:Repair", "Start mesh repair",
+    [If, [IExists, Tool:Export],
+        [RoutineCall, CheckSystem]
+
+        // get the name of current active sub tool
+        [VarSet, subTName, ""]
+        [VarSet, activeSubT, [SubToolGetActiveIndex]]
+        [VarSet, totalSubTools, [SubToolGetCount]]
+        [SubToolSelect, [Val,activeSubT]] // selects the subtool by number
+        [VarSet,subTName, [IGetTitle,Tool:ItemInfo]] // gets the tool name
+        [VarSet,subTName, [StrExtract,subTName,0,[StrLength,subTName]-2]] // this takes of the end period
+
+        // export current subtool to GoZ file (temporary file)
+        [FileNameSetNext, [StrMerge, [Var, dataDirPath], [Var, subTName], ".GoZ"]]
+        // store current export settings
+        [VarSet, origScale, [IGet,Tool:Export:Scale]]
+        [VarSet, origOffsetX, [IGet,Tool:Export:X Offset]]
+        [VarSet, origOffsetY, [IGet,Tool:Export:Y Offset]]
+        [VarSet, origOffsetZ, [IGet,Tool:Export:Z Offset]]
+        [ISet,Tool:Export:Scale,0.0]
+        [ISet,Tool:Export:X Offset,0.0]
+        [ISet,Tool:Export:Y Offset,0.0]
+        [ISet,Tool:Export:Z Offset,0.0]
+        // store current position
+        [VarSet, origPosX, [IGet,Tool:Geometry:X Position]]
+        [VarSet, origPosY, [IGet,Tool:Geometry:Y Position]]
+        [VarSet, origPosZ, [IGet,Tool:Geometry:Z Position]]
+
+
+        [IPress,Tool:Export]
+
+        [VarSet, textForDll, [StrMerge, [Var, dataDirPath], [Var, subTName], ".GoZ"]]
+        [VarSet, result, [FileExecute, [Var, dllPath], "repairMesh", [Var, textForDll], 0, ]]
+
+        [If, result,
+            // import to Tool
+            [IFreeze,
+                [IPress,Tool:PolyMesh3D]
+
+                [FileNameSetNext, [StrMerge, [Var, dataDirPath], [Var, subTName], "_repaired.GoZ"]]
+                [IPress,"Tool:Import"]
+
+                // set position for repaired mesh
+                [ISet, Tool:Geometry:X Position, [Var, origPosX]]
+                [ISet, Tool:Geometry:Y Position, [Var, origPosY]]
+                [ISet, Tool:Geometry:Z Position, [Var, origPosZ]]
+
+                // restore scale/Offset
+                [ISet,Tool:Export:Scale,[Var, origScale]]
+                [ISet,Tool:Export:X Offset,[Var, origOffsetX]]
+                [ISet,Tool:Export:Y Offset,[Var, origOffsetY]]
+                [ISet,Tool:Export:Z Offset,[Var, origOffsetZ]]
+
+                // erase temporary file.
+                [FileDelete, [StrMerge, [Var, dataDirPath], [Var, subTName], ".GoZ"]]
+                [FileDelete, [StrMerge, [Var, dataDirPath], [Var, subTName], "_repaired.GoZ"]]
+            ]
+        ,
+            [Note, "Sorry, there is some error..."]
+        ]
+    ]
+    ,
+    0,
+    1
+]

@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
 
+option(BUILD_EXE "Switch whether build exe file or dll file" OFF)
+
 if(WIN32)
     cmake_policy(SET CMP0091 NEW)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
@@ -41,9 +43,17 @@ set(INCLUDE_DIR
     submodule/FromZ/src
 )
 
-set(CPP_FILES
-    main.cpp
-)
+if(BUILD_EXE)
+    # Target for this build
+    set(CPP_FILES
+        main.cpp
+    )
+else()
+    # Create shared library
+    set(CPP_FILES
+        3DBuilderFromZBrush.cpp
+    )
+endif()
 ##########################################
 ##### Include path / cpp files (end) #####
 ##########################################
@@ -61,9 +71,13 @@ set(LINK_LIBS
 ##### Libraries (end) #####
 ###########################
 
-
-# Target for this build
-add_executable(${PROJECT} ${CPP_FILES})
+if(BUILD_EXE)
+    # Target for this build
+    add_executable(${PROJECT} ${CPP_FILES})
+else()
+    # Create shared library
+    add_library(${PROJECT} SHARED ${CPP_FILES})
+endif()
 
 # Add a include files
 target_include_directories(${PROJECT} PUBLIC ${INCLUDE_DIR})
@@ -83,7 +97,8 @@ set(
 endif ()
 set(
     MY_RELEASE_OPTIONS
-    -O2
+    /O2
+    /MT
 )
 
 target_compile_options(${PROJECT} PUBLIC "$<$<CONFIG:DEBUG>:${MY_DEBUG_OPTIONS}>")

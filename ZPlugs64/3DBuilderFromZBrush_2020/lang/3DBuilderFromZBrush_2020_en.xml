@@ -1,0 +1,9 @@
+<buttons>
+  <button path="ZPlugin:3DBuilder Repair from ZBrush">
+    <title text="3DBuilder Repair from ZBrush" trans=""/>
+  </button>
+  <button path="ZPlugin:3DBuilder Repair from ZBrush:Repair">
+    <title text="Repair" trans=""/>
+    <info text="Start mesh repair" trans=""/>
+  </button>
+</buttons>
