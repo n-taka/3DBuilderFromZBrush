@@ -6,9 +6,9 @@
 [VarDef, enLangFilePath, "dummy"]
 [VarDef, language]
 // debug
-[VarDef, dataDirPath, [fileNameResolvePath, "3DBuilderFromZBrush_2020\"]]
+//[VarDef, dataDirPath, [fileNameResolvePath, "3DBuilderFromZBrush_2020\"]]
 // install
-//[VarDef, dataDirPath, [fileNameResolvePath, "ZBRUSH_ZSTARTUP\ZPlugs64\ThicknessCheckerData_2019\"]]
+[VarDef, dataDirPath, [fileNameResolvePath, "ZBRUSH_ZSTARTUP\ZPlugs64\3DBuilderFromZBrush_2020\"]]
 
 //////
 // search dlls
@@ -24,13 +24,13 @@
     // Make sure we have the dll and set its path
     [If, [ZBrushInfo, 6]==0,//windows
         //use the path below for testing only
-        [VarSet, dllPath, "3DBuilderFromZBrush_2020\3DBuilderFromZBrush.dll"]
-        [VarSet, zfutilPath, "3DBuilderFromZBrush_2020\ZFileUtils64.dll"]
-        [VarSet, enLangFilePath, "3DBuilderFromZBrush_2020\lang\3DBuilderFromZBrush_2020_en.xml"]
+        //[VarSet, dllPath, "3DBuilderFromZBrush_2020\3DBuilderFromZBrush.dll"]
+        //[VarSet, zfutilPath, "3DBuilderFromZBrush_2020\ZFileUtils64.dll"]
+        //[VarSet, enLangFilePath, "3DBuilderFromZBrush_2020\lang\3DBuilderFromZBrush_2020_en.xml"]
         //use the path below for installed plugins
-        //[VarSet, dllPath, "ZBRUSH_ZSTARTUP\ZPlugs64\3DBuilderFromZBrush_2020\3DBuilderFromZBrush.dll"]
-        //[VarSet, zfutilPath, "ZBRUSH_ZSTARTUP\ZPlugs64\3DBuilderFromZBrush_2020\ZFileUtils64.dll"]
-        //[VarSet, enLangFilePath, "ZBRUSH_ZSTARTUP\ZPlugs64\3DBuilderFromZBrush_2020\lang\3DBuilderFromZBrush_2020_en.xml"]
+        [VarSet, dllPath, "ZBRUSH_ZSTARTUP\ZPlugs64\3DBuilderFromZBrush_2020\3DBuilderFromZBrush.dll"]
+        [VarSet, zfutilPath, "ZBRUSH_ZSTARTUP\ZPlugs64\3DBuilderFromZBrush_2020\ZFileUtils64.dll"]
+        [VarSet, enLangFilePath, "ZBRUSH_ZSTARTUP\ZPlugs64\3DBuilderFromZBrush_2020\lang\3DBuilderFromZBrush_2020_en.xml"]
         ,
         // no support for macOS for this plugins
     ]
